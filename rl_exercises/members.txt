@@ -1,3 +1,2 @@
 member 1: Xie Yang
-member 2: Xie Yang
-member 3: Xie Yang
+
