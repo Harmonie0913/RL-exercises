@@ -65,13 +65,16 @@ class ValueIteration(AbstractAgent):
             return
 
         # TODO: Call value_iteration() with the MDP components
-        V_opt, pi_opt = None, None  # placeholder
+
+        V_opt, pi_opt = value_iteration(
+            T=self.T, R_sa=self.R_sa, gamma=self.gamma, seed=self.seed
+        )
 
         self.V = V_opt
         self.pi = pi_opt
         printr("Converged V:", self.V)
         printr("Derived policy π:", self.pi)
-        # self.policy_fitted = True # TODO: uncomment this after implementation
+        self.policy_fitted = True  # TODO: uncomment this after implementation
 
     def predict_action(
         self,
@@ -84,7 +87,8 @@ class ValueIteration(AbstractAgent):
             self.update_agent()
 
         # TODO: Return action from learned policy
-        raise NotImplementedError("predict_action() is not implemented.")
+        action = int(self.pi[observation])
+        return action, {}
 
 
 def value_iteration(
@@ -124,11 +128,34 @@ def value_iteration(
     """
     n_states, n_actions = R_sa.shape
     V = np.zeros(n_states, dtype=float)
-    # rng = np.random.default_rng(seed)  uncomment this
-    pi = None
+    rng = np.random.default_rng(seed)  # uncomment this
+    # pi = None
 
     # TODO: update V using the Q values until convergence
 
+    while True:
+        # Compute Q(s, a) for all states and actions
+        Q = R_sa + gamma * np.sum(T * V, axis=2)
+
+        # Bellman optimality update: V_new(s) = max_a Q(s, a)
+        V_new = np.max(Q, axis=1)
+
+        # Check convergence
+        delta = np.max(np.abs(V_new - V))
+
+        V = V_new
+
+        if delta < epsilon:
+            break
+
+    # After convergence, compute Q again using final V
+    Q = R_sa + gamma * np.sum(T * V, axis=2)
     # TODO: Extract the greedy policy from V and update pi
+    pi = np.zeros(n_states, dtype=int)
+
+    for s in range(n_states):
+        best_value = np.max(Q[s])
+        best_actions = np.flatnonzero(np.isclose(Q[s], best_value))
+        pi[s] = rng.choice(best_actions)
 
     return V, pi

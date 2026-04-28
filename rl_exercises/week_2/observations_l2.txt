@@ -1,0 +1,10 @@
+With access only to step(), the transition dynamics(T) and reward function(R) are hidden. 
+I observed that Value Iteration and Policy Iteration do not work directly anymore, 
+because both methods require the full MDP model.
+
+In my implementation, Value Iteration uses env.transition_matrix and env.get_reward_per_action(), 
+and Policy Iteration also needs transition probabilities and rewards for its Bellman updates. 
+The step() function only returns sampled transitions and rewards, but not the full model.
+
+Therefore, both methods cannot be applied directly in this setting. 
+They would only work if the dynamics and rewards were first estimated from sampled data.
