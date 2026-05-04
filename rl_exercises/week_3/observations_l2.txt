@@ -1,0 +1,28 @@
+SARSA results:
+The SARSA agent was able to learn a useful policy. 
+During evaluation, the reward improved from 9.0 at the beginning to values such as 50.0 and sometimes 90.0. 
+The final evaluation reward was 50.0.
+
+Q-learning results:
+The Q-learning agent also learned a useful policy. 
+Its evaluation reward also improved from 9.0 at the beginning to values such as 50.0 and sometimes 90.0. 
+The final evaluation reward was also 50.0.
+
+Comparison:
+SARSA and Q-learning can sometimes reach similar scores as last week's methods, for example 50.0 or 90.0, 
+but the evaluation rewards are not perfectly stable. 
+
+This is likely because the agents are model-free and learn only from sampled interactions with the environment. 
+Unlike value iteration or policy iteration, they do not know the full transition model and reward model.
+
+SARSA updates Q-values using the next action that is actually selected by the current epsilon-greedy policy. 
+
+Q-learning updates Q-values using the best possible next action, max_a Q(s', a), independent of the action that is actually selected during exploration.
+
+In my runs, both algorithms reached similar final performance. 
+I did not observe a very strong difference in the final reward, but Q-learning sometimes reached high rewards slightly earlier. 
+However, because only one evaluation episode was used, the results can fluctuate a lot.
+
+One interesting observation is that the reward sometimes suddenly drops to 0.0, even after many training steps(14000 steps).
+I think this happens because one unlucky episode can produce a reward of 0.0.
+Also, the learned policy may still not be fully stable, which means the agent can perform well in many cases, but it may still choose a bad action in some states.

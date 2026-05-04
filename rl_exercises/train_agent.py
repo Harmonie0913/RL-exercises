@@ -22,6 +22,7 @@ from rl_exercises.agent.buffer import SimpleBuffer
 from rl_exercises.environments import MarsRover
 from rl_exercises.week_2.policy_iteration import PolicyIteration
 from rl_exercises.week_2.value_iteration import ValueIteration
+from rl_exercises.week_3 import EpsilonGreedyPolicy, TDAgent
 
 # from rl_exercises.week_4 import EpsilonGreedyPolicy as TabularEpsilonGreedyPolicy
 # from rl_exercises.week_4 import SARSAAgent
@@ -59,9 +60,22 @@ def train(cfg: DictConfig) -> float:
         return train_sb3(env, cfg)
     elif cfg.agent == "random":
         agent = RandomAgent(env)
-    else:
-        # TODO: add your agent options here
-        raise NotImplementedError
+    # else:
+    # TODO: add your agent options here
+    elif cfg.agent in ["sarsa", "qlearning"]:
+        policy = EpsilonGreedyPolicy(
+            env=env,
+            epsilon=cfg.get("epsilon", 0.1),
+            seed=cfg.seed,
+        )
+        agent = TDAgent(
+            env=env,
+            policy=policy,
+            alpha=cfg.get("alpha", 0.5),
+            gamma=cfg.get("gamma", 1.0),
+            algorithm=cfg.agent,
+        )
+        # raise NotImplementedError
 
     buffer_cls = eval(cfg.buffer_cls)
     buffer = buffer_cls(**cfg.buffer_kwargs)
