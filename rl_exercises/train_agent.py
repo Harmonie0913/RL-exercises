@@ -8,6 +8,7 @@ from functools import partial
 
 import gymnasium as gym
 import hydra
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import rl_exercises
@@ -113,7 +114,14 @@ def train(cfg: DictConfig) -> float:
             eval_reward_buffer["eval_steps"].append(step)
             eval_reward_buffer["eval_rewards"].append(eval_performance)
 
+    model_path = os.path.abspath("model.csv")
+    heatmap_path = os.path.abspath(f"{cfg.agent}_q_heatmap.png")
+
     agent.save(str(os.path.abspath("model.csv")))
+    plot_q_heatmap(agent, filename=heatmap_path)
+
+    print(f"Saved model to: {model_path}")
+
     pd.DataFrame(train_reward_buffer).to_csv(
         os.path.abspath("train_rewards.csv"), index=False
     )
@@ -161,6 +169,41 @@ def train_sb3(env: gym.Env, cfg: DictConfig) -> float:
     means = evaluate(env, model, episodes=cfg.n_eval_episodes, seed=cfg.seed)
     performance = np.mean(means)
     return performance
+
+
+def plot_q_heatmap(agent: AbstractAgent, filename: str = "q_heatmap.png") -> None:
+    """Plot Q-table as a heatmap for tabular agents."""
+
+    # Only tabular agents such as SARSA and Q-learning have a Q-table.
+    if not hasattr(agent, "Q"):
+        print("No Q-table found. Skip heatmap plotting.")
+        return
+
+    # Sort states to make the heatmap easier to read.
+    states = sorted(agent.Q.keys())
+
+    if len(states) == 0:
+        print("Q-table is empty. Skip heatmap plotting.")
+        return
+
+    # Build a matrix where each row is one state and each column is one action.
+    q_values = np.array([agent.Q[state] for state in states])
+
+    plt.figure()
+    plt.imshow(q_values, aspect="auto", vmin=0, vmax=100)
+    plt.colorbar(label="Q-value")
+
+    plt.xlabel("Action")
+    plt.ylabel("State")
+    plt.title("Q-table heatmap")
+
+    plt.yticks(range(len(states)), states)
+    plt.xticks(range(q_values.shape[1]))
+
+    plt.savefig(filename, bbox_inches="tight")
+    plt.close()
+
+    print(f"Saved Q-table heatmap to: {filename}")
 
 
 def evaluate(
