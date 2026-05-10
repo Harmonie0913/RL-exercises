@@ -1,0 +1,14 @@
+In this run, the DQN agent learned successfully on CartPole-v1. During the first 3000 frames,
+the mean reward stayed very low, around 10–20, which indicates almost random behavior. 
+
+After approximately 3000–6000 frames, the reward increased sharply.
+This suggests that the replay buffer contained enough useful transitions 
+and the Q-network started to learn a meaningful value function.
+
+After around 7000 frames, the mean reward stayed mostly between 170 and 230. 
+
+The second increase after around 12500 frames may be caused by better replay buffer contents.
+As the agent improved, the buffer contained more transitions from longer and better episodes. 
+These samples helped the Q-network improve further.
+
+path: RL-exercises\rl_exercises\week_4\week4_l1_plot\00-02-22\dqn_training_curve.png

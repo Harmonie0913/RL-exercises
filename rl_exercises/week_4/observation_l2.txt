@@ -1,0 +1,14 @@
+Using 5 seeds(0,1,2,3,4) changed the interpretation of the result. 
+A single run can look very good or very bad depending on the random seed. 
+With 5 seeds, the training curve gives a more reliable picture of the DQN agent's performance.
+
+The median, IQM and mean are close to each other(around 0.75–0.76), 
+which suggests that the final performance is not dominated by a single extreme seed. 
+However, the confidence intervals are still relatively wide, meaning that the DQN result remains sensitive to random seeds. 
+The optimality gap is around 0.24, which means that the agent is still about 24% away from the chosen target performance(250).
+
+I feel more confident in the results than with a single seed, 
+because the plot shows whether the learning trend is consistent across different random initializations. 
+However, five seeds may still not enough, so large confidence intervals would indicate that the result is still uncertain.
+
+path: RL-exercises\rl_exercises\week_4\week4_l2_plots
