@@ -83,10 +83,24 @@ class Policy(nn.Module):
         torch.Tensor
             Softmax probabilities over actions, shape (batch_size, n_actions).
         """
+        # Make sure input is a float tensor
+        x = x.float()
+
+        # Flatten input if it has more than 2 dimensions
+        if x.dim() > 2:
+            x = torch.flatten(x, start_dim=1)
+
+        # If input is a single state, add batch dimension
+        if x.dim() == 1:
+            x = x.unsqueeze(0)
         # TODO: Apply fc1 followed by ReLU (Flatten input if needed)
+        x = torch.relu(self.fc1(x))
         # TODO: Apply fc2 to get logits
+        logits = self.fc2(x)
         # TODO: Return softmax over logits along the last dimension
-        pass
+        probs = torch.softmax(logits, dim=-1)
+
+        return probs
 
 
 class REINFORCEAgent(AbstractAgent):
@@ -160,7 +174,20 @@ class REINFORCEAgent(AbstractAgent):
         # TODO: Pass state through the policy network to get action probabilities
         # If evaluate is True, return the action with highest probability
         # Otherwise, sample from the action distribution and return the log-probability as a key in the dictionary (Hint: use torch.distributions.Categorical)
-        return 0, {}  # Placeholder return value
+        state_t = torch.tensor(state, dtype=torch.float32)
+        probs = self.policy(state_t)
+
+        if evaluate:
+            action = torch.argmax(probs, dim=-1)
+            return int(action.item()), {}
+
+        dist = torch.distributions.Categorical(probs)
+        action = dist.sample()
+        log_prob = dist.log_prob(action)
+
+        return int(action.item()), {
+            "log_prob": log_prob.squeeze()
+        }  # Placeholder return value
 
     def compute_returns(self, rewards: List[float]) -> torch.Tensor:
         """
@@ -177,11 +204,18 @@ class REINFORCEAgent(AbstractAgent):
             Discounted returns tensor of shape (len(rewards),).
         """
         # TODO: Initialize running return R = 0
+        returns = []
+        R = 0.0
         # TODO: Iterate over rewards and compute the return-to-go:
         #       - Update R = r + gamma * R
         #       - Insert R at the beginning of the returns list
+        for r in reversed(rewards):
+            R = r + self.gamma * R
+            returns.insert(0, R)
         # TODO: Convert the list of returns to a torch.Tensor and return
-        pass
+        returns = torch.tensor(returns, dtype=torch.float32)
+
+        return returns
 
     def update_agent(
         self,
@@ -212,7 +246,9 @@ class REINFORCEAgent(AbstractAgent):
         # normalize advantages
         # TODO: Normalize advantages with mean and standard deviation,
         # and add 1e-8 to the denominator to avoid division by zero
-        advantages = returns_t
+        advantages = (returns_t - returns_t.mean()) / (
+            returns_t.std(unbiased=False) + 1e-8
+        )
 
         lp_tensor = torch.stack(log_probs)
         loss = -torch.sum(lp_tensor * advantages)
@@ -276,6 +312,20 @@ class REINFORCEAgent(AbstractAgent):
         self.policy.eval()
         returns: List[float] = []
         # TODO: rollout num_episodes in eval_env and aggregate undiscounted returns across episodes
+        for _ in range(num_episodes):
+            state, _ = eval_env.reset()
+            done = False
+            episode_return = 0.0
+
+            while not done:
+                action, _ = self.predict_action(state, evaluate=True)
+                next_state, reward, term, trunc, _ = eval_env.step(action)
+
+                done = term or trunc
+                episode_return += float(reward)
+                state = next_state
+
+            returns.append(episode_return)
 
         self.policy.train()  # Set back to training mode
 
@@ -352,7 +402,16 @@ def main(cfg: DictConfig) -> None:
     """
     # Initialize environment and seed
     print(f"config: {cfg}")
+
+    # set to control trajectory length
     env = gym.make(cfg.env.name)
+
+    if "max_episode_steps" in cfg.env and cfg.env.max_episode_steps is not None:
+        env = gym.wrappers.TimeLimit(
+            env.unwrapped, max_episode_steps=cfg.env.max_episode_steps
+        )
+        print("Episode steps:", env.spec.max_episode_steps)
+
     set_seed(env, cfg.seed)
 
     # Instantiate agent with hyperparameters from config

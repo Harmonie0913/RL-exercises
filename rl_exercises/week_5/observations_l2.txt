@@ -1,0 +1,33 @@
+1.How does the length of the trajectories affect the training?
+
+I tried different maximum trajectory lengths(100,200,500) for CartPole-v1. 
+Since CartPole gives reward 1 at each step, the return is approximately equal to the number of steps in the trajectory. 
+Therefore, shorter trajectories limit the maximum possible return, while longer trajectories allow higher returns.
+
+In my experiments, shorter trajectory lengths such as 100 and 200 became more stable later in training. 
+Once the agent reached the maximum possible return, the evaluation performance usually stayed near this limit. 
+With the longer trajectory length of 500, the agent could achieve higher returns, but the training remained more unstable and sometimes dropped after reaching 500.
+
+This suggests that longer trajectories provide more long-term information, but also increase the variance of REINFORCE updates. 
+Therefore, longer trajectories can improve the possible final return, but make training noisier.
+
+
+2.Does the same network architecture and learning rate work for LunarLander-v2?
+
+For LunarLander, I used LunarLander-v3 because LunarLander-v2 is deprecated in the current Gymnasium version. 
+I kept the same network architecture and learning rate as for CartPole-v1, using hidden_size = 128 and lr = 0.01.
+
+The training performance was much worse and more unstable than on CartPole-v1. 
+The evaluation return sometimes improved, for example reaching around 189, but it later dropped strongly again and ended at a negative return. 
+This suggests that the same architecture and learning rate do not work reliably for LunarLander-v3.
+
+Maybe because LunarLander is a more difficult environment with more complex dynamics and a harder reward structure. 
+
+
+3.How is the sample complexity (how many steps it takes to solve the environment) of this algorithm related to the DQN from the last exercise?
+
+Compared to DQN from the previous exercise, REINFORCE seems to be less sample-efficient. 
+DQN uses a replay buffer and can reuse old transitions many times, 
+while REINFORCE is on-policy and uses each sampled trajectory only once for one policy update.
+
+
