@@ -26,3 +26,12 @@ However, because only one evaluation episode was used, the results can fluctuate
 One interesting observation is that the reward sometimes suddenly drops to 0.0, even after many training steps(14000 steps).
 I think this happens because one unlucky episode can produce a reward of 0.0.
 Also, the learned policy may still not be fully stable, which means the agent can perform well in many cases, but it may still choose a bad action in some states.
+
+
+Heatmaps:
+\results\sarsa\MarsRover\seed_0\sarsa_q_heatmap.png
+\results\qlearning\MarsRover\seed_0\qlearning_q_heatmap.png
+
+The heatmaps show that Q-learning generally has higher Q-values than SARSA. 
+This is expected because Q-learning uses max_a Q(s', a') in the update target and is therefore more optimistic. 
+SARSA uses the actually selected next action, including exploratory actions, so its Q-values are usually more conservative. 

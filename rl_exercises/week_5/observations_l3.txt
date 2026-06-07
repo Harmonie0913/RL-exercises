@@ -1,0 +1,20 @@
+I compared DDPG and continuous REINFORCE on Pendulum-v1 using the same environment, 
+number of episodes (200), maximum trajectory length (200), discount factor (0.99), and random seed (0).
+
+I used Pendulum-v1 because DDPG is designed for continuous action spaces. 
+In this environment, the agent has to output a continuous torque value instead of choosing from a small set of discrete actions. 
+Therefore, Pendulum-v1 is a simple and suitable test case for DDPG.
+
+For a fair comparison, I used a continuous version of REINFORCE. 
+This was necessary because the original policy_gradient.py implementation was designed for discrete action spaces.
+
+The results show that DDPG learns much faster and achieves substantially better returns than REINFORCE. 
+DDPG improves from around -1300 to approximately -200 episode return, and tends to become more stable over training.
+In contrast, REINFORCE stays mostly between -1200 and -1400 and does not show a clear improvement.
+
+The reason is that DDPG combines deterministic policy gradients with stabilizing ideas from DQN, especially replay buffers and target networks. 
+The replay buffer allows DDPG to reuse past transitions and reduces correlations between samples. 
+The target networks make the Bellman targets change more slowly, which stabilizes critic learning.
+
+In contrast, REINFORCE is an on-policy Monte Carlo method. 
+It updates the policy only after complete trajectories, so its gradient estimates will have higher variance, especially in continuous control tasks.
