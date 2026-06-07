@@ -1,0 +1,8 @@
+I implemented Soft Actor-Critic for continuous control and also implemented a simplified continuous PPO baseline with a Gaussian policy.
+
+On Pendulum-v1, SAC learned much faster and reached much higher returns than continuous PPO. SAC improved from around -1400 to approximately -100, while continuous PPO stayed around -1500 and did not show clear improvement.
+
+This supports the main claim that SAC is sample-efficient for continuous control. A likely reason is that SAC is off-policy and can reuse transitions from the replay buffer, while PPO is on-policy and discards old data after each update.
+
+However, the PPO baseline was a simplified implementation using a Gaussian policy with clipped actions, and the hyperparameters were not extensively tuned. Therefore, the result should not be interpreted as PPO generally failing on continuous control.
+It only shows that, in my implementation and training budget, SAC performed much better.

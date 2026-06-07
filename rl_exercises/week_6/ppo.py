@@ -101,7 +101,25 @@ class PPOAgent(AbstractAgent):
         dones: torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         # TODO: compute advantages using GAE (Hint: replicate the GAE formula from actor critic)
-        return None  # template placeholder
+        rewards_t = torch.tensor(rewards, dtype=torch.float32)
+
+        deltas = rewards_t + self.gamma * next_values * (1.0 - dones) - values
+
+        advantages = torch.zeros_like(rewards_t)
+        gae = 0.0
+
+        for t in reversed(range(len(rewards_t))):
+            gae = deltas[t] + self.gamma * self.gae_lambda * (1.0 - dones[t]) * gae
+            advantages[t] = gae
+
+        returns = advantages + values
+
+        # Enhancement 1: normalize advantages to stabilize PPO updates.
+        advantages = (advantages - advantages.mean()) / (
+            advantages.std(unbiased=False) + 1e-8
+        )
+
+        return advantages.detach(), returns.detach()
 
     def update(self, trajectory: List[Any]) -> None:
         # unpack trajectory
@@ -113,12 +131,13 @@ class PPOAgent(AbstractAgent):
         dones = torch.tensor([t[5] for t in trajectory], dtype=torch.float32)
 
         # TODO: compute values and next_values without gradients
-        values = ...  # noqa: F841  # template placeholder
-        next_values = ...  # noqa: F841  # template placeholder
+        next_states = torch.stack([torch.from_numpy(t[6]).float() for t in trajectory])
+
+        with torch.no_grad():
+            values = self.value_fn(states)
+            next_values = self.value_fn(next_states)
 
         # TODO: compute advantages and returns
-        advantages = ...  # template placeholder
-        returns = ...  # template placeholder
 
         advantages, returns = self.compute_gae(rewards, values, next_values, dones)
 
@@ -132,20 +151,32 @@ class PPOAgent(AbstractAgent):
         for _ in range(self.epochs):
             for b_states, b_actions, b_oldlogp, b_adv, b_ret in loader:
                 # TODO: compute policy loss, value loss, and entropy loss
-
+                probs = self.policy(b_states)
+                dist = Categorical(probs)
                 # TODO: compute new log probabilities by sampling actions from the policy distribution
-                new_logp = ...  # noqa: F841  # template placeholder
+                new_logp = dist.log_prob(b_actions)
+                entropy = dist.entropy().mean()
 
                 # TODO: compute the ratio of new log probabilities to old log probabilities
-
+                ratio = torch.exp(new_logp - b_oldlogp)
                 # TODO: compute the clipped surrogate loss using the clipped objective
-                policy_loss = ...  # template placeholder
+                unclipped = ratio * b_adv
+                clipped = (
+                    torch.clamp(
+                        ratio,
+                        1.0 - self.clip_eps,
+                        1.0 + self.clip_eps,
+                    )
+                    * b_adv
+                )
 
+                policy_loss = -torch.min(unclipped, clipped).mean()
                 # TODO: compute value loss using mean squared error
-                value_loss = ...  # template placeholder
+                values_pred = self.value_fn(b_states)
+                value_loss = torch.mean((values_pred - b_ret) ** 2)
 
                 # TODO: compute entropy loss using the distribution's entropy
-                entropy_loss = ...  # template placeholder
+                entropy_loss = -entropy
 
                 loss = (
                     policy_loss
@@ -154,6 +185,12 @@ class PPOAgent(AbstractAgent):
                 )
                 self.optimizer.zero_grad()
                 loss.backward()
+
+                # Enhancement 2: clip gradients to avoid overly large updates.
+                torch.nn.utils.clip_grad_norm_(
+                    list(self.policy.parameters()) + list(self.value_fn.parameters()),
+                    max_norm=0.5,
+                )
                 self.optimizer.step()
 
         return policy_loss.item(), value_loss.item(), entropy_loss.item()

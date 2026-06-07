@@ -1,0 +1,7 @@
+I implemented PPO with GAE, the clipped surrogate objective, value-function loss, entropy regularization, mini-batch updates, and multiple optimization epochs.
+
+I also added two implementation enhancements: advantage normalization and gradient clipping. Advantage normalization helps stabilize the scale of the policy update, while gradient clipping prevents very large parameter updates.
+
+On LunarLander-v3, PPO performed clearly better than the actor-critic baseline. The enhanced PPO agent improved more steadily and reached much higher returns than actor-critic. Compared with vanilla PPO, the enhanced version was also more stable and learned faster.
+
+However, PPO did not fully solve the environment within the given training budget, since the final return was not consistently high and positive.
