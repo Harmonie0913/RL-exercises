@@ -1,0 +1,7 @@
+I compared four baseline strategies for the actor-critic agent: no baseline, running-average baseline, learned value baseline, and GAE.
+
+On CartPole-v1, all methods were able to learn successfully and reached high returns. The confidence intervals overlap strongly, so no baseline clearly dominated. This is probably because CartPole-v1 is a simple environment.
+
+On LunarLander-v3, learning was much less stable. The returns mostly remained negative and the confidence intervals were large and also no baseline clearly dominated. This suggests that the simple on-policy actor-critic agent is not very sample-efficient for this harder environment.
+
+Overall, the baselines conceptually help reduce variance, but in my experiments their practical effect depended strongly on the environment.
