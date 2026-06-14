@@ -47,9 +47,9 @@ class DualHeadValueNetwork(nn.Module):
         if x.dim() == 1:
             x = x.unsqueeze(0)
         x = x.view(x.size(0), -1)
-        x = ...
-        value_ext = ...
-        value_int = ...
+        x = F.relu(self.fc1(x))
+        value_ext = self.fc_ext(x).squeeze(-1)
+        value_int = self.fc_int(x).squeeze(-1)
         return value_ext, value_int
 
 
@@ -81,23 +81,26 @@ class TargetNetwork(nn.Module):
 
         # TODO: build hidden layers dynamically based on n_layers, using nn.Linear and nn.ReLU
         for i in range(n_layers):
-            in_dim = ...
-            layers[f"fc{i + 1}"] = ...
-            layers[f"relu{i + 1}"] = ...
+            in_dim = obs_dim if i == 0 else hidden_dim
+            layers[f"fc{i + 1}"] = nn.Linear(in_dim, hidden_dim)
+            layers[f"relu{i + 1}"] = nn.ReLU()
 
         # TODO: output layer mapping hidden_dim to output_dim
-        layers["out"] = ...
+        layers["out"] = nn.Linear(hidden_dim, output_dim)
 
         # TODO: combine all layers into self.net using nn.Sequential
-        self.net = ...
+        self.net = nn.Sequential(layers)
 
         # TODO: freeze all parameters permanently (no training)
         for param in self.parameters():
-            param.requires_grad = ...
+            param.requires_grad = False
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # TODO: Apply forward pass
-        return ...
+        if x.dim() == 1:
+            x = x.unsqueeze(0)
+        x = x.view(x.size(0), -1)
+        return self.net(x)
 
 
 class PredictorNetwork(nn.Module):
@@ -128,19 +131,22 @@ class PredictorNetwork(nn.Module):
 
         # TODO: Build hidden layers dynamically based on n_layers, using nn.Linear and nn.ReLU (same architecture as TargetNetwork)
         for i in range(n_layers):
-            in_dim = ...
-            layers[f"fc{i + 1}"] = ...
-            layers[f"relu{i + 1}"] = ...
+            in_dim = obs_dim if i == 0 else hidden_dim
+            layers[f"fc{i + 1}"] = nn.Linear(in_dim, hidden_dim)
+            layers[f"relu{i + 1}"] = nn.ReLU()
 
         # TODO: output layer mapping hidden_dim to output_dim
-        layers["out"] = ...
+        layers["out"] = nn.Linear(hidden_dim, output_dim)
 
         # TODO: combine all layers into self.net using nn.Sequential
-        self.net = ...
+        self.net = nn.Sequential(layers)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # TODO: Apply forward pass
-        return ...
+        if x.dim() == 1:
+            x = x.unsqueeze(0)
+        x = x.view(x.size(0), -1)
+        return self.net(x)
 
 
 class RewardForwardFilter:

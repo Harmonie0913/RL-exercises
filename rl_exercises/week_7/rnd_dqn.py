@@ -102,11 +102,24 @@ class RNDDQNAgent(DQNAgent):
         output_dim = rnd_hidden_size
 
         # Target network is frozen, predictor is trained to match it
-        self.target_network_rnd = ...
-        self.predictor_network_rnd = ...
+        self.target_network_rnd = TargetNetwork(
+            obs_dim,
+            output_dim,
+            hidden_dim=rnd_hidden_size,
+            n_layers=rnd_n_layers,
+        )
 
+        self.predictor_network_rnd = PredictorNetwork(
+            obs_dim,
+            output_dim,
+            hidden_dim=rnd_hidden_size,
+            n_layers=rnd_n_layers,
+        )
         # Optimizer for the predictor network
-        self.rnd_optimizer = ...
+        self.rnd_optimizer = torch.optim.Adam(
+            self.predictor_network_rnd.parameters(),
+            lr=rnd_lr,
+        )
 
     def update_rnd(
         self, training_batch: List[Tuple[Any, Any, float, Any, bool, Dict]]
@@ -121,14 +134,15 @@ class RNDDQNAgent(DQNAgent):
         """
         # TODO: get next_states from the batch
         _, _, _, next_states, _, _ = zip(*training_batch)
-        next_states = ...
+        next_states = torch.tensor(np.array(next_states), dtype=torch.float32)
 
         # TODO: compute the MSE between target and predictor embeddings
         with torch.no_grad():
-            target_embeddings = ...
+            target_embeddings = self.target_network_rnd(next_states)
+
         self.rnd_optimizer.zero_grad()
-        predictor_embeddings = ...
-        mse = ...
+        predictor_embeddings = self.predictor_network_rnd(next_states)
+        mse = nn.functional.mse_loss(predictor_embeddings, target_embeddings)
 
         # TODO: update the RND network
         mse.backward()
@@ -150,16 +164,19 @@ class RNDDQNAgent(DQNAgent):
             The RND bonus for the state.
         """
         # TODO: extract current state as a tensor
-        state_tensor = ...
+        state_tensor = torch.from_numpy(state).float().unsqueeze(0)
 
         # TODO: compute MSE error between predictor and target embeddings as the bonus
         with torch.no_grad():
-            target_embedding = ...
-            predictor_embedding = ...
-        error = ...
+            target_embedding = self.target_network_rnd(state_tensor)
+            predictor_embedding = self.predictor_network_rnd(state_tensor)
 
-        # TODO: scale by reward weight and return
-        bonus = ...
+        error = nn.functional.mse_loss(
+            predictor_embedding,
+            target_embedding,
+            reduction="mean",
+        )  # TODO: scale by reward weight and return
+        bonus = self.rnd_reward_weight * error.item()
         return bonus
 
     def train(self, num_frames: int, eval_interval: int = 1000) -> None:
@@ -185,7 +202,7 @@ class RNDDQNAgent(DQNAgent):
 
             # TODO: apply RND bonus
             # (TODO just the RND bonus, the other part of training loop is provided)
-            reward += ...
+            reward += self.get_rnd_bonus(next_state)
 
             # store and step
             self.buffer.add(state, action, reward, next_state, done or truncated, {})
@@ -214,6 +231,8 @@ class RNDDQNAgent(DQNAgent):
                     )
 
         print("Training complete.")
+        # get data
+        return steps, episode_rewards
 
 
 @hydra.main(config_path="../configs/agent/", config_name="rnd_dqn", version_base="1.1")

@@ -159,18 +159,18 @@ class PPOAgent(AbstractAgent):
 
         for _ in range(self.epochs):
             for b_states, b_actions, b_oldlogp, b_adv, b_ret in loader:
-                # TODO: compute policy loss, value loss, and entropy loss
-                probs = self.policy(b_states)
-                dist = Categorical(probs)
-                # TODO: compute new log probabilities by sampling actions from the policy distribution
-                # new_logp = ...  # noqa: F841  # template placeholder
+                # # TODO: compute policy loss, value loss, and entropy loss
+                # probs = self.policy(b_states)
+                # dist = Categorical(probs)
+                # # TODO: compute new log probabilities by sampling actions from the policy distribution
+                # # new_logp = ...  # noqa: F841  # template placeholder
 
-                # TODO: compute the ratio of new log probabilities to old log probabilities
-                ratio = torch.exp(new_logp - b_oldlogp)
-                # TODO: compute the clipped surrogate loss using the clipped objective
-                # policy_loss = ...  # template placeholder
+                # # TODO: compute the ratio of new log probabilities to old log probabilities
+                # ratio = torch.exp(new_logp - b_oldlogp)
+                # # TODO: compute the clipped surrogate loss using the clipped objective
+                # # policy_loss = ...  # template placeholder
 
-                policy_loss = -torch.min(unclipped, clipped).mean()
+                # policy_loss = -torch.min(unclipped, clipped).mean()
                 # TODO: compute value loss using mean squared error
                 # value_loss = ...  # template placeholder
 

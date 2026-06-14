@@ -1,0 +1,10 @@
+The snapshots show the visited LunarLander states at 10k, 50k, and 100k steps.
+The x-axis is state[0], the y-axis is state[1], and the color shows the raw NovelD intrinsic reward.
+
+At 10k steps, exploration is still limited and the intrinsic reward is high.
+At 50k steps, the agent visits a wider region, while the intrinsic reward decreases.
+At 100k steps, the explored region is larger, but most intrinsic rewards are close to zero.
+
+This behavior is expected: early in training, many states are novel, so NovelD gives stronger exploration rewards.
+Later, the RND predictor has learned many visited states, so the novelty signal becomes weaker.
+Therefore, the snapshots suggest that NovelD-PPO encourages exploration.

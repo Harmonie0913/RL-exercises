@@ -1,0 +1,12 @@
+The results do not show a clear and consistent improvement from RND.
+
+For DQN, RND-DQN is better than DQN at some evaluation points, for example around 25k, 30k, and 45k steps. 
+However, the curves are highly unstable and the uncertainty regions strongly overlap. 
+Therefore, no reliable positive effect can be concluded.
+
+For PPO, RND-PPO is slightly more stable in the early training phase, but standard PPO clearly performs better later in training. 
+PPO continues improving after around 30k steps, while RND-PPO stays at a lower return level.
+
+This suggests that RND is not a very good fit in this setting. 
+LunarLander-v3 may not be exploration-hard enough, because epsilon-greedy DQN and entropy-based PPO already provide sufficient exploration. 
+The large uncertainty regions suggest high variance, and the RND performance may also be sensitive to hyperparameters such as intrinsic reward weight and predictor update frequency.
