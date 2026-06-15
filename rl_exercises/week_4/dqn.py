@@ -4,13 +4,10 @@ Deep Q-Learning implementation.
 
 from typing import Any, Dict, List, Tuple
 
-import os
-
 import gymnasium as gym
 import hydra
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -138,8 +135,9 @@ class DQNAgent(AbstractAgent):
         # TODO: implement exponential‐decayin
         # ε = ε_final + (ε_start - ε_final) * exp(-total_steps / ε_decay)
         # Currently, it is constant and returns the starting value ε
+        # return self.epsilon_start
         return self.epsilon_final + (self.epsilon_start - self.epsilon_final) * np.exp(
-            -self.total_steps / self.epsilon_decay
+            -1.0 * self.total_steps / self.epsilon_decay
         )
 
     def predict_action(
@@ -168,18 +166,22 @@ class DQNAgent(AbstractAgent):
             # purely greedy
             t = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
             with torch.no_grad():
+                # qvals = ...
                 qvals = self.q(t)
+            # action = None
             action = int(torch.argmax(qvals, dim=1).item())
         else:
             # ε-greedy
             if np.random.rand() < self.epsilon():
                 # TODO: sample random action
-                action = int(self.env.action_space.sample())
+                # action = None
+                action = self.env.action_space.sample()
             else:
                 # TODO: select purely greedy action from Q(s)
                 t = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
                 with torch.no_grad():
                     qvals = self.q(t)
+                # action = None
                 action = int(torch.argmax(qvals, dim=1).item())
 
         return action
@@ -240,12 +242,14 @@ class DQNAgent(AbstractAgent):
 
         # current Q estimates for taken actions
         # TODO: pass batched states through self.q and gather Q(s,a)
+        # pred = ...
         pred = self.q(s).gather(1, a).squeeze(1)
 
         # TODO: compute TD target with frozen network
         with torch.no_grad():
-            next_q = self.target_q(s_next).max(dim=1)[0]
-            target = r + self.gamma * next_q * (1.0 - mask)
+            # target = ...
+            next_q = self.target_q(s_next).max(1)[0]
+            target = r + self.gamma * next_q * (1 - mask)
 
         loss = nn.MSELoss()(pred, target)
 
@@ -291,6 +295,7 @@ class DQNAgent(AbstractAgent):
             # update if ready
             if len(self.buffer) >= self.batch_size:
                 # TODO: sample batch from replay buffer
+                # batch = ...
                 batch = self.buffer.sample(self.batch_size)
                 _ = self.update_agent(batch)
 
@@ -301,11 +306,8 @@ class DQNAgent(AbstractAgent):
                 # logging
                 if len(recent_rewards) % 10 == 0:
                     # TODO: compute avg over last eval_interval episodes and print
+                    # avg = ...
                     avg = np.mean(recent_rewards[-10:])
-                    # plot curves
-                    plot_frames.append(frame)
-                    plot_rewards.append(avg)
-
                     print(
                         f"Frame {frame}, AvgReward(10): {avg:.2f}, ε={self.epsilon():.3f}"
                     )
@@ -329,83 +331,25 @@ class DQNAgent(AbstractAgent):
 @hydra.main(config_path="../configs/agent/", config_name="dqn", version_base="1.1")
 def main(cfg: DictConfig):
 
-    mode = cfg.get("mode", "l1")
+    # 2) TODO: map config → agent kwargs
+    # agent_kwargs = dict(...)
+    agent_kwargs = dict(
+        buffer_capacity=cfg.agent.buffer_capacity,
+        batch_size=cfg.agent.batch_size,
+        lr=cfg.agent.learning_rate,
+        gamma=cfg.agent.gamma,
+        epsilon_start=cfg.agent.epsilon_start,
+        epsilon_final=cfg.agent.epsilon_final,
+        epsilon_decay=cfg.agent.epsilon_decay,
+        target_update_freq=cfg.agent.target_update_freq,
+        seed=cfg.seed,
+    )
 
-    if mode == "l1":
-        env = gym.make(cfg.env.name)
-        set_seed(env, cfg.seed)
-
-        agent_kwargs = dict(
-            buffer_capacity=cfg.agent.buffer_capacity,
-            batch_size=cfg.agent.batch_size,
-            lr=cfg.agent.learning_rate,
-            gamma=cfg.agent.gamma,
-            epsilon_start=cfg.agent.epsilon_start,
-            epsilon_final=cfg.agent.epsilon_final,
-            epsilon_decay=cfg.agent.epsilon_decay,
-            target_update_freq=cfg.agent.target_update_freq,
-            seed=cfg.seed,
-        )
-
-        agent = DQNAgent(env, **agent_kwargs)
-
-        agent.train(
-            num_frames=cfg.train.num_frames,
-            eval_interval=cfg.train.eval_interval,
-        )
-
-    elif mode == "l2":
-        seeds = [0, 1, 2, 3, 4]
-
-        os.makedirs("l2_results", exist_ok=True)
-
-        for seed in seeds:
-            print(f"\n===== Running seed {seed} =====")
-
-            env = gym.make(cfg.env.name)
-            set_seed(env, seed)
-
-            agent_kwargs = dict(
-                buffer_capacity=cfg.agent.buffer_capacity,
-                batch_size=cfg.agent.batch_size,
-                lr=cfg.agent.learning_rate,
-                gamma=cfg.agent.gamma,
-                epsilon_start=cfg.agent.epsilon_start,
-                epsilon_final=cfg.agent.epsilon_final,
-                epsilon_decay=cfg.agent.epsilon_decay,
-                target_update_freq=cfg.agent.target_update_freq,
-                seed=seed,
-            )
-
-            agent = DQNAgent(env, **agent_kwargs)
-
-            frames, rewards = agent.train(
-                num_frames=cfg.train.num_frames,
-                eval_interval=cfg.train.eval_interval,
-            )
-
-            df = pd.DataFrame(
-                {
-                    "frame": frames,
-                    "mean_reward": rewards,
-                }
-            )
-
-            df.to_csv(f"l2_results/seed_{seed}.csv", index=False)
-
-            plt.figure()
-            plt.plot(frames, rewards)
-            plt.xlabel("Number of frames")
-            plt.ylabel("Mean reward")
-            plt.title(f"DQN CartPole-v1 Seed {seed}")
-            plt.grid(True)
-            plt.savefig(f"l2_results/seed_{seed}.png")
-            plt.close()
-
-        print("All seeds complete.")
-
-    else:
-        raise ValueError(f"Unknown mode: {mode}")
+    # 3) TODO:instantiate & train
+    # agent = ...
+    # agent.train(...)
+    agent = DQNAgent(env, **agent_kwargs)
+    agent.train(cfg.train.num_frames, cfg.train.eval_interval)
 
 
 if __name__ == "__main__":

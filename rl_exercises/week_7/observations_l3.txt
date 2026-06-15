@@ -1,0 +1,13 @@
+I compared DQN, RND-DQN, and Ensemble-DQN on LunarLander-v3. 
+Ensemble-DQN uses disagreement between several Q-networks as an uncertainty-based exploration signal.
+
+The results show that Ensemble-DQN starts with much worse performance than DQN and RND-DQN. 
+This is likely because the ensemble uncertainty is high at the beginning, which leads to more exploratory and unstable actions.
+
+However, Ensemble-DQN improves steadily over training. 
+Compared to RND-DQN, its learning curve is smoother and shows a more consistent upward trend. 
+RND-DQN reaches good performance at some points, but its curve fluctuates more strongly.
+
+At the final evaluation point, Ensemble-DQN achieves a higher mean return than RND-DQN. 
+However, the uncertainty regions overlap, so this result should not be interpreted as a clear win. 
+Overall, Ensemble-DQN seems to provide a stable exploration signal, but more seeds or longer training would be needed for a stronger conclusion.
