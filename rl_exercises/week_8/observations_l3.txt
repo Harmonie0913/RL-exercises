@@ -1,0 +1,45 @@
+The experiment shows a statistical precipice effect:
+
+Overall test:
+test: paired permutation test
+aggregation: normalized AUC over env-seed pairs
+alpha: 0.05
+n_pairs: 15
+mean_auc_dqn: 0.12716842105263157
+mean_auc_reinforce: 0.30672877192982456
+mean_difference_dqn_minus_reinforce: -0.17956035087719296
+p_value: 0.043795620437956206
+significant: True
+
+A simple overall mean or overall p-value suggests that REINFORCE is significantly better than DQN. 
+
+However, the per-environment results show a more nuanced picture:
+
+Per-environment tests:
+              env                     test  ...   p_value  significant
+0     CartPole-v1  paired permutation test  ...  0.065193        False
+1      Acrobot-v1  paired permutation test  ...  1.000000        False
+2  MountainCar-v0  paired permutation test  ...  1.000000        False
+
+REINFORCE clearly performs better on CartPole, there is no clear advantage on Acrobot, and both algorithms fail on MountainCar. 
+Different metrics also lead to different interpretations: 
+
+Aggregate metrics:
+   algorithm   n      mean  ...  median_bootstrap_ci_high  iqm_bootstrap_ci_low  iqm_bootstrap_ci_high
+0        DQN  15  0.127168  ...                  0.226636              0.039539               0.201818
+1  REINFORCE  15  0.306729  ...                  0.656437              0.023043               0.526232
+
+the mean favors REINFORCE, while the median is less supportive because REINFORCE has high variance across environments. 
+Therefore, relying on one aggregate score would be misleading.
+
+The probability of improvement shows that REINFORCE does not consistently dominate DQN. 
+
+Probability of improvement:
+              env          comparison  n_pairs  probability_of_improvement  mean_difference_reinforce_minus_dqn
+0     CartPole-v1  P(REINFORCE > DQN)        5                         1.0                             0.473147
+1      Acrobot-v1  P(REINFORCE > DQN)        5                         0.3                             0.065534
+2  MountainCar-v0  P(REINFORCE > DQN)        5                         0.5                             0.000000
+3             ALL  P(REINFORCE > DQN)       15                         0.6                             0.179560
+
+REINFORCE wins all paired runs on CartPole, but not on Acrobot, and both algorithms perform equally poorly on MountainCar. 
+Therefore, the overall advantage of REINFORCE is mainly driven by CartPole rather than by consistent improvement across all environments.

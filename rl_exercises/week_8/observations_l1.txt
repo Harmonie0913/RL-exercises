@@ -1,0 +1,21 @@
+In Level 1, I trained DQN on CartPole-v1 with fixed environment-step evaluation. 
+I compared low, medium and large numbers of seeds.Because episode lengths differ across seeds, 
+evaluating by episode can compare runs after different numbers of environment interactions. 
+Fixed-step evaluation ensures all seeds are compared at the same training progress, so the statistics are aligned and fair.
+
+The number of seeds has a strong influence on the interpretation. 
+With only 3 seeds, the mean curve is very sensitive to individual runs and different low seed sets lead to visibly different conclusions. 
+Some low seed sets suggest later improvement, while others suggest stagnation. This shows that conclusions based on very few seeds are unreliable.
+
+The standard deviation does not always become smaller with more seeds, because it measures the variability of the algorithm itself. With more seeds, more diverse runs can be observed. 
+In contrast, the standard error and the 95% confidence interval width generally become smaller when using more seeds. 
+This means that the estimate of the mean performance becomes more reliable.
+
+The comparison between mean, median and IQM shows that the mean can be influenced by outlier runs. 
+In several parts of training, the mean is higher than the median and IQM, which suggests that a few strong runs pull the mean upward. 
+Median and IQM are more robust and give a more conservative estimate of typical performance.
+For low n=3, IQM is not very informative because the number of runs is too small. 
+In my implementation, IQM is almost identical to the mean, so the two curves overlap.
+
+Overall, the experiment shows that RL evaluation is highly sensitive to seed choice and aggregation metrics. 
+Using more seeds and reporting robust metrics such as median or IQM gives a more reliable interpretation than only reporting the mean over a small number of seeds.
