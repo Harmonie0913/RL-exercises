@@ -1,0 +1,9 @@
+test: paired permutation test
+aggregation: AUC over evaluation curve per seed
+alpha: 0.05
+n_seeds: 10
+mean_auc_dqn: 2601555.0
+mean_auc_reinforce: 6493197.5
+mean_auc_difference_dqn_minus_reinforce: -3891642.5
+p_value: 0.001999800019998
+significant: True

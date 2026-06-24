@@ -1,0 +1,3 @@
+Using AUC over the evaluation curve as the per-seed aggregate metric, REINFORCE achieved a much higher mean AUC than DQN. 
+The paired permutation test gave p = 0.0019998, which is below alpha = 0.05. Therefore, the difference is statistically significant, and REINFORCE performed significantly better than DQN in this experiment.
+However, REINFORCE also has larger variance across seeds, as shown by the wider boxplot and wider confidence interval.
